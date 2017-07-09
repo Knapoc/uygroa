@@ -1,5 +1,5 @@
 # uygroa
-DNS based ad blocker forked from ublockr
+DNS based ad blocker forked from ublockr featuring Pixelserv-TLS
 
 Requires entware + usb storage mounted to router
 Installation:
