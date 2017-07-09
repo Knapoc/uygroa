@@ -13,11 +13,7 @@ Additions to the original ublockr:
 * update host file sources (listupdate)
 
 Options:
-* -update
-    Updates uygroa with the latest github version
-* -version
-    shows version number
-* -listupdate
-    deletes ip.list and no.list and downloads them again from github. ip and no ip lists contain the sources for the host file.
-* -clearcache
-    deletes all lists (incl. whitelist)
+* -update: updates uygroa with the latest github version
+* -version: shows version number
+* -listupdate: deletes ip.list and no.list and downloads them again from github. ip and no ip lists contain the sources for the host file.
+* -clearcache: deletes all lists (incl. whitelist)
