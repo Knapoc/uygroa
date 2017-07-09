@@ -1,13 +1,14 @@
 #!/bin/sh
 # uygroa
-Revision=2
+Revision=3
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
-
+cfg=/opt/etc/uygroa.cfg                                               # edit this if you want your cfg in a different directory
 SELF=$(basename $0)                                                   #uses the same name as the file
 UPDATE_BASE=https://raw.githubusercontent.com/Knapoc/uygroa/master    #dont link directly to file link to the folder
 UPDATE_SELF=${UPDATE_SELF:-1}
+WHITELISTING=enabled                                                   #enable/disable whitelisting here (enabled/disabled)
 
 show_version () {
 echo "your current version is $Revision"
@@ -44,8 +45,6 @@ EOF
 }
 
 check_update () { if [ ${UPDATE_SELF} -ne 0 ]; then self_updater; fi }
-
-cfg=/opt/etc/uygroa.cfg     # edit this if you want your cfg in a different directory
 
 if [ -f $cfg ]; then logger -s -t uygroa "Reading uygroa config...." >&2
 else logger -s -t uygroa no configuration found exiting... ; exit 0 ;fi
@@ -129,46 +128,81 @@ cat $path/ip.part | grep -oE "$regexp_ip" | awk '{print "127.0.0.1    " $2}' | s
 cat $path/no.part | grep -oE "$regexp_no"| awk '{print "127.0.0.1    " $1}'| sed "s/127\.0\.0\.1/$pix_v6/" | sort -u >>$path/ipv6.part
 }
 
-whitelist () {
-if [ -f $path/whitelist.filter ]; then echo; else wget -q $wlfilter -O $path/whitelist.filter; fi
-whitelist_ipv4
-check_ipv6 whitelist_ipv6
+make_hostfile () {
+make_ipv4_hostfile
+check_ipv6 make_ipv6_hostfile
 }
 
-whitelist_ipv4 () {
-if [[ -r $path/whitelist.filter ]];then
-    awk -F':' '{print $1}' $path/whitelist.filter | while read -r line; do echo "$pix_v4    $line"; done > $path/whitelist_v4.part
-    # use privacy-filter.blacklist if found and in use to whitelist domains so that filter uses full potential
-    if [ -s /jffs/privacy-filter.blacklist ] && [ -s /jffs/scripts/privacy-filter ];then
-      echo -e " additionally removing privacy-filter entries\n in blocking file, privacy-filter.blacklist is in use\n"
-      logger "uygroa removed privacy-filter entries in blocking file, list is in use"
-      grep -Fvxf /jffs/privacy-filter.whitelist /jffs/privacy-filter.blacklist | grep "^[^#;]" | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v4    $line"; done >> $path/whitelist_v4.part
-    fi
-    # use malware-filter.blacklist if found and in use to whitelist domains so that filter uses full potential
-    if [ -s /jffs/malware-filter.blacklist ] && [ -s /jffs/scripts/malware-filter ];then
-      echo -e " additionally removing malware-filter entries\n in blocking file, malware-filter.blacklist is in use\n"
-      logger "uygroa removed malware-filter entries in blocking file, list is in use"
-      grep -Fvxf /jffs/malware-filter.whitelist /jffs/malware-filter.blacklist | grep "^[^#;]" | sed 's/http[s]*:\/\///;s|\/.*||' | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v4    $line"; done >> $path/whitelist_v4.part
-    fi
-    grep -F -x -v -f $path/whitelist_v4.part $path/ipv4.part | tr '[A-Z]' '[a-z]' | sort -u > $path/ipv4_hosts
-fi
+make_ipv4_hostfile () {
+  check_malware_blocking_ipv4
+  check_privacy_blocking_ipv4
+  run_whitelisting_ipv4
+  if [[ -s $path/whitelist_v4.part ]];
+    then grep -Fvxf $path/whitelist_v4.part $path/ipv4.part | tr '[A-Z]' '[a-z]' | sort -u > $path/ipv4_hosts;
+  else cat $path/ipv4.part  | tr '[A-Z]' '[a-z]' | sort -u > $path/ipv4_hosts;
+  fi
 }
 
-whitelist_ipv6 () {
-    awk -F':' '{print $1}' $path/whitelist.filter | while read -r line; do echo "$pix_v6    $line"; done > $path/whitelist_v6.part
-    # use privacy-filter.blacklist if found and in use to whitelist domains so that filter uses full potential
-    if [ -s /jffs/privacy-filter.blacklist ] && [ -s /jffs/scripts/privacy-filter ];then
-      echo -e " additionally removing privacy-filter entries\n in blocking file, privacy-filter.blacklist is in use\n"
-      logger "uygroa removed privacy-filter entries in blocking file, list is in use"
-      grep -Fvxf /jffs/privacy-filter.whitelist /jffs/privacy-filter.blacklist | grep "^[^#;]" | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v6    $line"; done >> $path/whitelist_v6.part
-    fi
-    # use malware-filter.blacklist if found and in use to whitelist domains so that filter uses full potential
-    if [ -s /jffs/malware-filter.blacklist ] && [ -s /jffs/scripts/malware-filter ];then
-      echo -e " additionally removing malware-filter entries\n in blocking file, malware-filter.blacklist is in use\n"
-      logger "uygroa removed malware-filter entries in blocking file, list is in use"
-      grep -Fvxf /jffs/malware-filter.whitelist /jffs/malware-filter.blacklist | grep "^[^#;]" | sed 's/http[s]*:\/\///;s|\/.*||' | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v6    $line"; done >> $path/whitelist_v6.part
-    fi
-    grep -F -x -v -f $path/whitelist_v6.part $path/ipv6.part | tr '[A-Z]' '[a-z]' | sort -u > $path/ipv6_hosts
+make_ipv6_hostfile () {
+  check_malware_blocking_ipv6
+  check_privacy_blocking_ipv6
+  run_whitelisting_ipv6
+  if [[ -s $path/whitelist_v6.part ]];
+    then grep -Fvxf $path/whitelist_v6.part $path/ipv6.part | tr '[A-Z]' '[a-z]' | sort -u > $path/ipv6_hosts;
+  else cat $path/ipv6.part  | tr '[A-Z]' '[a-z]' | sort -u > $path/ipv6_hosts;
+  fi
+}
+
+check_malware_blocking_ipv4 () {
+  if [ -s /jffs/malware-filter.blacklist ] && [ -s /jffs/scripts/malware-filter ];then
+    echo -e " additionally removing malware-filter entries\n in blocking file, malware-filter.blacklist is in use\n"
+    logger "uygroa removed malware-filter entries in blocking file, list is in use"
+    grep -Fvxf /jffs/malware-filter.whitelist /jffs/malware-filter.blacklist | grep "^[^#;]" | sed 's/http[s]*:\/\///;s|\/.*||' | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v4    $line"; done > $path/whitelist_v4.part
+  fi
+}
+
+check_privacy_blocking_ipv4 () {
+  if [ -s /jffs/privacy-filter.blacklist ] && [ -s /jffs/scripts/privacy-filter ];then
+    echo -e " additionally removing privacy-filter entries\n in blocking file, privacy-filter.blacklist is in use\n"
+    logger "uygroa removed privacy-filter entries in blocking file, list is in use"
+    grep -Fvxf /jffs/privacy-filter.whitelist /jffs/privacy-filter.blacklist | grep "^[^#;]" | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v4    $line"; done >> $path/whitelist_v4.part
+  fi
+}
+
+run_whitelisting_ipv4 () {
+if [[ $WHITELISTING = "enabled" ]]; then
+    if [ -f $path/whitelist.filter ]; then echo; else wget -q $wlfilter -O $path/whitelist.filter; fi
+    awk -F':' '{print $1}' $path/whitelist.filter | while read -r line; do echo "$pix_v4    $line"; done >> $path/whitelist_v4.part
+  else
+    echo "Whitelisting is disabled"
+    logger -s -t uygroa Whitelisting disabled
+  fi
+}
+
+check_malware_blocking_ipv6 () {
+  if [ -s /jffs/malware-filter.blacklist ] && [ -s /jffs/scripts/malware-filter ];then
+    echo -e " additionally removing malware-filter entries\n in blocking file, malware-filter.blacklist is in use\n"
+    logger "uygroa removed malware-filter entries in blocking file, list is in use"
+    grep -Fvxf /jffs/malware-filter.whitelist /jffs/malware-filter.blacklist | grep "^[^#;]" | sed 's/http[s]*:\/\///;s|\/.*||' | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v6    $line"; done > $path/whitelist_v6.part
+  fi
+}
+
+check_privacy_blocking_ipv6 () {
+  if [ -s /jffs/privacy-filter.blacklist ] && [ -s /jffs/scripts/privacy-filter ];then
+    echo -e " additionally removing privacy-filter entries\n in blocking file, privacy-filter.blacklist is in use\n"
+    logger "uygroa removed privacy-filter entries in blocking file, list is in use"
+    grep -Fvxf /jffs/privacy-filter.whitelist /jffs/privacy-filter.blacklist | grep "^[^#;]" | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v6    $line"; done >> $path/whitelist_v6.part
+  fi
+}
+
+run_whitelisting_ipv6 () {
+if [[ $WHITELISTING = "enabled" ]]; then
+    if [ -f $path/whitelist.filter ]; then echo; else wget -q $wlfilter -O $path/whitelist.filter; fi
+    awk -F':' '{print $1}' $path/whitelist.filter | while read -r line; do echo "$pix_v6    $line"; done >> $path/whitelist_v6.part
+  else
+    echo "Whitelisting is disabled"
+    logger -s -t uygroa Whitelisting disabled  
+  fi
 }
 
 cleanup () {
@@ -230,7 +264,7 @@ case ${option} in
                 check_online
                 get_lists
                 sort_lists
-                whitelist
+                make_hostfile
                 cleanup
                 add_config
                 dnsmasq_restart
