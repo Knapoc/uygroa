@@ -1,6 +1,6 @@
 #!/bin/sh
 # uygroa
-Revision=3
+Revision=4
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
@@ -8,7 +8,6 @@ cfg=/opt/etc/uygroa.cfg                                               # edit thi
 SELF=$(basename $0)                                                   #uses the same name as the file
 UPDATE_BASE=https://raw.githubusercontent.com/Knapoc/uygroa/master    #dont link directly to file link to the folder
 UPDATE_SELF=${UPDATE_SELF:-1}
-WHITELISTING=enabled                                                   #enable/disable whitelisting here (enabled/disabled)
 
 show_version () {
 echo "your current version is $Revision"
@@ -201,7 +200,7 @@ if [[ $WHITELISTING = "enabled" ]]; then
     awk -F':' '{print $1}' $path/whitelist.filter | while read -r line; do echo "$pix_v6    $line"; done >> $path/whitelist_v6.part
   else
     echo "Whitelisting is disabled"
-    logger -s -t uygroa Whitelisting disabled  
+    logger -s -t uygroa Whitelisting disabled
   fi
 }
 
