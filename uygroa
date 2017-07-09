@@ -1,12 +1,12 @@
 #!/bin/sh
 # uygroa
-Revision=1
+Revision=2
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
 
 SELF=$(basename $0)                                                   #uses the same name as the file
-UPDATE_BASE=https://gitlab.com/spitfire-project/uygroa/raw/master    #dont link directly to file link to the folder
+UPDATE_BASE=https://raw.githubusercontent.com/Knapoc/uygroa/master    #dont link directly to file link to the folder
 UPDATE_SELF=${UPDATE_SELF:-1}
 
 show_version () {
