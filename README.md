@@ -11,6 +11,7 @@ Additions to the original ublockr:
 * compatible with malware-filter & privacy-filter by Toast
 * clear cache function
 * update host file sources (listupdate)
+* option to disable whitelists
 
 Options:
 * -update: updates uygroa with the latest github version
