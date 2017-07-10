@@ -17,7 +17,7 @@ Installation
 
 **NOTE**
 * Pixelserv-TLS is installed automatically. It may be necessary to configure it. To do so please refer to the additional resources
-* The configuration is done in **/opt/etc/uygroa**. AsusWRT (not MERLIN) shall configure **other**.
+* The configuration is done in **/opt/etc/uygroa.cfg**. AsusWRT (not MERLIN) shall configure **other**.
 * If you place uygroa.cfg in a different directory, make sure to update the path in uygroa.
 
 Additions to the original ublockr
@@ -32,16 +32,34 @@ Options
 --------------
 * **-update**
 
-   updates uygroa with the latest github version
+   Updates uygroa with the latest github version
 * **-version**
 
    shows version number
-* **-listupdate**
+* **-fetchall**
 
-   deletes ip.list and no.list and downloads them again from github. ip and no ip lists contain the sources for the host file.
+   Deletes ip.list, no.list and whitelist.filter and downloads them again from github.
+* **-fetchbl**
+
+   Deletes ip.list and no.list and downloads them again from github. These lists contain the various host file sources.
+* **-fetchwl**
+
+   Deletes whitelist.filter and downloads it again from github.
 * **-clearcache**
 
-   deletes all lists (incl. whitelist)
+   Deletes the content of the cache folder: ip.list, no.list, whitelist.filter, ipv4_hosts, ipv6_hosts
+
+Custom filtering
+--------------
+* **Whitelists**:
+
+   `nano /opt/var/cache/uygroa/whitelist.filter` **Note**: -fetchall & - fetchwl delete your customized whitelist.
+* **Sources**:
+
+   `nano /opt/var/cache/uygroa/ip.list` or `nano /opt/var/cache/uygroa/no.list` depending on the layout of the new hostfile: if listed with ip addess, then use ip.list. **Note**: -fetchall & - fetchbl delete your customized host file sources.
+* **Personal Blacklist**:
+
+   You can use your own blocklist. Make sure that it follows dnsmasq standards (e.g. `address=/domain.com/<pixelserv-ip>`) and link it in dnsmasq.conf.add (e.g. `conf-file=/mypersonalblocklist.conf`).
 
 Additional resources
 --------------
@@ -59,6 +77,8 @@ Uninstall uygroa
 1. `rm /opt/bin/uygroa`
 2. `rm /opt/etc/uygroa.cfg`
 3. `rm -r /opt/var/cache/uygroa/`
+4. edit dnsmasq config and remove the entry which links to /opt/var/cache/uygroa/ipv4_hosts (or ipv6_hosts).
+5. restart dnsmasq or reboot
 
 **Note**
 * This will not uninstall pixelserv-tls. To do so `opkg remove pixelserv-tls`

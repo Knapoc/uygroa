@@ -96,11 +96,25 @@ get_list_source_no () {
 wget -q $nolist -O $path/no.list
 }
 
+get_list_source_wl () {
+wget -q $wlfilter -O $path/whitelist.filter
+}
+
 list_source_update () {
+bl_source_update
+wl_source_update
+}
+
+bl_source_update () {
 rm $path/ip.list
 rm $path/no.list
 get_list_source_ip
 get_list_source_no
+}
+
+wl_source_update () {
+rm $path/whitelist.filter
+get_list_source_wl
 }
 
 get_lists () {
@@ -170,7 +184,7 @@ check_privacy_blocking_ipv4 () {
 
 run_whitelisting_ipv4 () {
 if [[ $WHITELISTING = "enabled" ]]; then
-    if [ -f $path/whitelist.filter ]; then echo; else wget -q $wlfilter -O $path/whitelist.filter; fi
+    if [ -f $path/whitelist.filter ]; then echo; else get_list_source_wl; fi
     awk -F':' '{print $1}' $path/whitelist.filter | while read -r line; do echo "$pix_v4    $line"; done >> $path/whitelist_v4.part
   else
     echo "Whitelisting is disabled"
@@ -196,7 +210,7 @@ check_privacy_blocking_ipv6 () {
 
 run_whitelisting_ipv6 () {
 if [[ $WHITELISTING = "enabled" ]]; then
-    if [ -f $path/whitelist.filter ]; then echo; else wget -q $wlfilter -O $path/whitelist.filter; fi
+    if [ -f $path/whitelist.filter ]; then echo; else get_list_source_wl; fi
     awk -F':' '{print $1}' $path/whitelist.filter | while read -r line; do echo "$pix_v6    $line"; done >> $path/whitelist_v6.part
   else
     echo "Whitelisting is disabled"
@@ -256,7 +270,9 @@ option="${1}"
 case ${option} in
                 -update) check_update ;;
                 -version) show_version ;;
-                -listupdate) list_source_update ;;
+                -fetchall) list_source_update ;;
+                -fetchbl) bl_source_update ;;
+                -fetchwl) wl_source_update ;;
                 -clearcache) clear_cache ;;
                 *)
                 #enable/disable here
