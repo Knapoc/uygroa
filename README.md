@@ -1,10 +1,10 @@
 uygroa
 =============
 Welcome to uygroa, a DNS based ad blocker forked from ublockr. uygroa redirects ad domains to pixelserv-tls webserver.
-Requires entware + usb storage mounted to router
 
 Requirements
 --------------
+* SSH/TELNET access
 * Router with entware capabilities
 * A swap enabled USB drive mounted to the router
 
@@ -18,6 +18,7 @@ Installation
 **NOTE**
 * Pixelserv-TLS is installed automatically. It may be necessary to configure it. To do so please refer to the additional resources
 * The configuration is done in **/opt/etc/uygroa**. AsusWRT (not MERLIN) shall configure **other**.
+* If you place uygroa.cfg in a different directory, make sure to update the path in uygroa.
 
 Additions to the original ublockr
 --------------
