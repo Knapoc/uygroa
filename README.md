@@ -58,6 +58,7 @@ Uninstall uygroa
 1. `rm /opt/bin/uygroa`
 2. `rm /opt/etc/uygroa.cfg`
 3. `rm -r /opt/var/cache/uygroa/`
+
 **Note**
 * This will not uninstall pixelserv-tls. To do so `opkg remove pixelserv-tls`
 * To remove all certificates **including the Root CA cert**: `rm /opt/var/cache/pixelserv/*` or (to delete the folder) `rm -r /opt/var/cache/pixelserv/`
