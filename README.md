@@ -17,7 +17,7 @@ Installation
 
 **NOTE**
 * Pixelserv-TLS is installed automatically. It may be necessary to configure it. To do so please refer to the additional resources
-* The configuration is done in **/opt/etc/uygroa**. AsusWRT (not MERLIN) shall configure **other**.
+* The configuration is done in **/opt/etc/uygroa.cfg**. AsusWRT (not MERLIN) shall configure **other**.
 * If you place uygroa.cfg in a different directory, make sure to update the path in uygroa.
 
 Additions to the original ublockr
@@ -59,6 +59,8 @@ Uninstall uygroa
 1. `rm /opt/bin/uygroa`
 2. `rm /opt/etc/uygroa.cfg`
 3. `rm -r /opt/var/cache/uygroa/`
+4. edit dnsmasq config and remove the entry which links to /opt/var/cache/uygroa/ipv4_hosts (or ipv6_hosts).
+5. restart dnsmasq or reboot
 
 **Note**
 * This will not uninstall pixelserv-tls. To do so `opkg remove pixelserv-tls`
