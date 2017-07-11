@@ -6,54 +6,7 @@
 # Script made for router supporting Entware
 
 # SET VARIABLES
-cfg=/opt/etc/uygroa.cfg                                               # edit this if you want your cfg in a different directory
-self=$(basename "$0")                                                 #uses the same name as the file
-update_base=https://raw.githubusercontent.com/Knapoc/uygroa/master    #dont link directly to file link to the folder
-update_self=${update_self:-1}
-local_rev=$(grep -oE 'Revision\s[0-9]{1,3}' "$0" | awk '{ print $2 }')
-online_rev=$(wget --no-check-certificate -q -O - "$update_base/$self" | grep -oE 'Revision\s[0-9]{1,3}' | awk '{print $2}')
-# END VARIABLES
-
-######### self-updater
-
-run_self_updater () {
-        logger -s -t uygroa-updater "Performing self-update to Version $online_rev."
-if      ! wget --quiet --output-document="$0.tmp" "$update_base/$self" ;
-then    logger -s -t uygroa-updater "Failed downloading new version!"
-        logger -s -t uygroa-updater "File requested: $update_base/$self"
-        exit 1
-fi
-OCTAL_MODE=$(stat -c '%a' "$0")
-    case ${OCTAL_MODE:--1} in
-        -[1] )          logger -s -t uygroa "Failed: Error : OCTAL_MODE was empty"; exit 1 ;;
-        777|775|755 )   logger -s -t uygroa "OCTAL mode set:${OCTAL_MODE}" ;;
-        * )             logger -s -t uygroa "Failed: Error in OCTAL_MODEs, found value=${OCTAL_MODE}" exit 1 ;;
-    esac
-if      ! chmod "$OCTAL_MODE" "$0".tmp ;
-then    logger -s -t uygroa-updater "Error on chmod $OCTAL_MODE %0.tmp from $update_base/$self, can't continue"
-        exit 1
-fi
-cat > /tmp/updatescript.sh << EOF
-#!/bin/sh
-if mv "$0.tmp" "$0";
-then    logger -s -t uygroa-updater "Update complete."
-        exec env update_self=0 /bin/sh "$0"
-        rm \$0
-else    logger -s -t uygroa-updater "Update failed."
-fi
-EOF
-        echo "Inserting update process..."
-            exec /bin/sh /tmp/updatescript.sh; rm /tmp/updatescript.sh
-}
-
-function_check_update () {
-if [ "${update_self}" -ne 0 ] && [ "${online_rev}" -gt "${local_rev}" ]
-then run_self_updater
-  else
-    logger -s -t uygroa "No update needed. You're running version $local_rev. The latest online version is $online_rev."
-fi }
-
-######### uygroa
+cfg=/opt/etc/uygroa.cfg
 
 if [ -f $cfg ]
     then logger -s -t uygroa "Reading uygroa config." >&2
@@ -62,6 +15,19 @@ if [ -f $cfg ]
   fi
 
 source $cfg
+                                               # edit this if you want your cfg in a different directory
+self=$(basename "$0")                                                 #uses the same name as the file
+update_base=https://raw.githubusercontent.com/Knapoc/uygroa/master    #dont link directly to file link to the folder
+update_self=${update_self:-1}
+local_rev=$(grep -oE 'Revision\s[0-9]{1,3}' "$0" | awk '{ print $2 }')
+online_rev=$(wget --no-check-certificate -q -O - "$update_base/$self" | grep -oE 'Revision\s[0-9]{1,3}' | awk '{print $2}')
+# END VARIABLES
+
+
+
+######### uygroa
+
+
 
 # SET APPCHECK
 if [ -z "$(which opkg)" ]; then logger -s -t uygroa "no package manager found"; exit 0; else
@@ -177,11 +143,11 @@ run_check_privacy_blocking_ipv4 () {
 }
 
 run_whitelisting_ipv4 () {
-if [ "$WHITELISTING" = "enabled" ]; then
+if [ "$whitelisting" = "enabled" ]; then
     if [ -f "$path"/whitelist.filter ]; then echo; else get_list_source_wl; fi
     awk -F':' '{print $1}' "$path"/whitelist.filter | while read -r line; do echo "$pix_v4    $line"; done >> "$path"/whitelist_v4.part
   else
-    logger -s -t uygroa Whitelisting disabled
+    logger -s -t uygroa "Whitelisting disabled"
   fi
 }
 
@@ -200,7 +166,7 @@ run_check_privacy_blocking_ipv6 () {
 }
 
 run_whitelisting_ipv6 () {
-if [ "$WHITELISTING" = "enabled" ]; then
+if [ "$whitelisting" = "enabled" ]; then
     if [ -f "$path"/whitelist.filter ]; then echo; else get_list_source_wl; fi
     awk -F':' '{print $1}' "$path"/whitelist.filter | while read -r line; do echo "$pix_v6    $line"; done >> "$path"/whitelist_v6.part
   else
@@ -277,11 +243,61 @@ if grep -Fxq "addn-hosts=$path/ipv6_hosts" "$configuration"; then sed --in-place
 function_dnsmasq_restart
 }
 
+######### self-updater
+
+run_self_updater () {
+        logger -s -t uygroa-updater "Performing self-update to Version $online_rev."
+if      ! wget --quiet --output-document="$0.tmp" "$update_base/$self" ;
+then    logger -s -t uygroa-updater "Failed downloading new version!"
+        logger -s -t uygroa-updater "File requested: $update_base/$self"
+        exit 1
+fi
+OCTAL_MODE=$(stat -c '%a' "$0")
+    case ${OCTAL_MODE:--1} in
+        -[1] )          logger -s -t uygroa "Failed: Error : OCTAL_MODE was empty"; exit 1 ;;
+        777|775|755 )   logger -s -t uygroa "OCTAL mode set:${OCTAL_MODE}" ;;
+        * )             logger -s -t uygroa "Failed: Error in OCTAL_MODEs, found value=${OCTAL_MODE}" exit 1 ;;
+    esac
+if      ! chmod "$OCTAL_MODE" "$0".tmp ;
+then    logger -s -t uygroa-updater "Error on chmod $OCTAL_MODE %0.tmp from $update_base/$self, can't continue"
+        exit 1
+fi
+cat > /tmp/updatescript.sh << EOF
+#!/bin/sh
+source $cfg
+if mv "$0.tmp" "$0";
+then    logger -s -t uygroa-updater "Update complete."
+        if [ "$run_postupgrade" = "enabled" ]; then
+        exec env update_self=0 /bin/sh "$0"
+      fi
+        #exec env update_self=0 /bin/sh "$0"
+        rm \$0
+else    logger -s -t uygroa-updater "Update failed."
+fi
+EOF
+        echo "Inserting update process..."
+            exec /bin/sh /tmp/updatescript.sh; #rm /tmp/updatescript.sh
+}
+
+function_check_update () {
+if [ "${update_self}" -ne 0 ] && [ "${online_rev}" -gt "${local_rev}" ]
+then run_self_updater
+  else
+    logger -s -t uygroa "No update needed. You're running version $local_rev. The latest online version is $online_rev."
+fi
+}
+
+function_force_update () {
+if [ "${update_self}" -ne 0 ]
+then run_self_updater
+fi
+}
 
 option="${1}"
 case ${option} in
                 -version)     info_show_version ;;
                 -update)      function_check_update ;;
+                -fupdate)     function_force_update ;;
                 -fetchall)    function_list_source_update ;;
                 -fetchbl)     function_bl_source_update ;;
                 -fetchwl)     function_wl_source_update ;;
