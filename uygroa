@@ -5,8 +5,8 @@
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
 
-# SET VARIABLES
-cfg=/opt/etc/uygroa.cfg
+# IMPORT CONFIG FILE
+cfg=/opt/etc/uygroa.cfg                                               # edit this if you want your cfg in a different directory
 
 if [ -f $cfg ]
     then logger -s -t uygroa "Reading uygroa config." >&2
@@ -15,18 +15,17 @@ if [ -f $cfg ]
   fi
 
 source $cfg
-                                               # edit this if you want your cfg in a different directory
+
+# SET VARIABLES                                               
 self=$(basename "$0")                                                 #uses the same name as the file
 update_self=${update_self:-1}
 local_rev=$(grep -oE 'Revision\s[0-9]{1,3}' "$0" | awk '{ print $2 }')
 online_rev=$(wget --no-check-certificate -q -O - "$update_base/$self" | grep -oE 'Revision\s[0-9]{1,3}' | awk '{print $2}')
+pix_v4=$(ifconfig "$iface" | awk '/inet addr/{print substr($2,6)}')
+pix_v6=$(ip addr show dev "$iface" | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d')
+regexp_ip='\b([0-9]{1,3}\.){3}[0-9]{1,3}\s+(([a-zA-Z0-9]+)(\-|\|_|\.)){1,8}[a-zA-Z]{2,4}((\.)[a-zA-Z]{2,4}){0,1}\b'
+regexp_no='\b(([a-zA-Z0-9]+)(\-|\|_|\.)){1,8}[a-zA-Z]{2,4}((\.)[a-zA-Z]{2,4}){0,1}\b'
 # END VARIABLES
-
-
-
-######### uygroa
-
-
 
 # SET APPCHECK
 if [ -z "$(which opkg)" ]; then logger -s -t uygroa "no package manager found"; exit 0; else
@@ -39,20 +38,14 @@ case $(grep -oE 'OpenWrt' /proc/version) in
   OpenWrt) ;;
   *) if [ -z "$(which pixelserv-tls)" ]; then opkg install pixelserv-tls; fi ;;
  esac; fi
+# END APPCHECK
 
- # END APPCHECK
 case $(grep -oE 'merlin|padavan|OpenWrt' /proc/version) in
-  merlin)    path=$asuswrt_path>&2; configuration=$asuswrt_dnsmasq >&2; iface=$nic ;;
-  padavan)   path=$padavan_path >&2; configuration=$padavan_dnsmasq >&2; iface=$nic ;;
-  OpenWrt)   path=$openwrt_path >&2; iface=$nic ;;
-  *)         path=$other_path >&2; configuration=$other_dnsmasq >&2; iface=$nic ;;
+  merlin)    path=$asuswrt_path>&2; configuration=$asuswrt_dnsmasq >&2 ;;
+  padavan)   path=$padavan_path >&2; configuration=$padavan_dnsmasq >&2 ;;
+  OpenWrt)   path=$openwrt_path >&2; ;;
+  *)         path=$other_path >&2; configuration=$other_dnsmasq >&2 ;;
 esac
-
-pix_v4=$(ifconfig "$iface" | awk '/inet addr/{print substr($2,6)}')
-pix_v6=$(ip addr show dev "$iface" | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d')
-regexp_ip='\b([0-9]{1,3}\.){3}[0-9]{1,3}\s+(([a-zA-Z0-9]+)(\-|\|_|\.)){1,8}[a-zA-Z]{2,4}((\.)[a-zA-Z]{2,4}){0,1}\b'
-regexp_no='\b(([a-zA-Z0-9]+)(\-|\|_|\.)){1,8}[a-zA-Z]{2,4}((\.)[a-zA-Z]{2,4}){0,1}\b'
-# END VARIABLES
 
 info_check_online () {
 while ! ping -q -c 1 google.com >/dev/null 2>&1; do
