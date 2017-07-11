@@ -41,10 +41,10 @@ case $(grep -oE 'OpenWrt' /proc/version) in
 # END APPCHECK
 
 case $(grep -oE 'merlin|padavan|OpenWrt' /proc/version) in
-  merlin)    path=$asuswrt_path>&2; configuration=$asuswrt_dnsmasq >&2 ;;
-  padavan)   path=$padavan_path >&2; configuration=$padavan_dnsmasq >&2 ;;
-  OpenWrt)   path=$openwrt_path >&2; ;;
-  *)         path=$other_path >&2; configuration=$other_dnsmasq >&2 ;;
+  merlin)    path=$asuswrt_path>&2; configuration=$asuswrt_dnsmasq >&2; pixpath=$asuswrt_pixpath ;;
+  padavan)   path=$padavan_path >&2; configuration=$padavan_dnsmasq >&2; pixpath=$padavan_pixpath ;;
+  OpenWrt)   path=$openwrt_path >&2; pixpath=$openwrt_pixpath ;;
+  *)         path=$other_path >&2; configuration=$other_dnsmasq >&2; pixpath=$other_pixpath ;;
 esac
 
 info_check_online () {
@@ -238,7 +238,7 @@ function_dnsmasq_restart
 ######### self-updater
 
 run_self_updater () {
-        logger -s -t uygroa-updater "Performing self-update to Version $online_rev."
+        logger -s -t uygroa-updater "Performing self-update to version $online_rev."
 if      ! wget --quiet --output-document="$0.tmp" "$update_base/$self" ;
 then    logger -s -t uygroa-updater "Failed downloading new version!"
         logger -s -t uygroa-updater "File requested: $update_base/$self"
@@ -283,6 +283,20 @@ then run_self_updater
 fi
 }
 
+function_generate_rootcert (){
+if [ ! -s "$pixpath"/ca.key ] && [ ! -s "$pixpath"/ca.crt ];then
+  openssl genrsa -out "$pixpath"/ca.key 1024
+  openssl req -key "$pixpath"/ca.key -new -x509 -days 3650 -sha256 -extensions v3_ca -out "$pixpath"/ca.crt -subj "/CN=Pixelserv CA"
+  logger -s -t uygroa "Root CA certificates were generated."
+else
+  logger -s -t uygroa "Root CA certificates already in place."
+fi
+}
+
+function_purge_pixelcerts (){
+find "$pixpath" -type f -not -name 'ca.*' -print0 | xargs -0 rm --
+}
+
 option="${1}"
 case ${option} in
                 -version)     info_show_version ;;
@@ -292,6 +306,8 @@ case ${option} in
                 -fetchbl)     function_bl_source_update ;;
                 -fetchwl)     function_wl_source_update ;;
                 -clearcache)  function_clear_cache ;;
+                -certgen)     function_generate_rootcert ;;
+                -certpurge)   function_purge_pixelcerts ;;
                 *)            #enable/disable here
                               info_check_online
                               function_get_lists
