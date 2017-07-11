@@ -275,7 +275,7 @@ else    logger -s -t uygroa-updater "Update failed."
 fi
 EOF
         echo "Inserting update process..."
-            exec /bin/sh /tmp/updatescript.sh; #rm /tmp/updatescript.sh
+            exec /bin/sh /tmp/updatescript.sh
 }
 
 function_check_update () {
