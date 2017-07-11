@@ -1,6 +1,6 @@
 #!/bin/sh
 # uygroa
-# Revision 11
+# Revision 12
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
@@ -16,7 +16,7 @@ if [ -f $cfg ]
 
 source $cfg
 
-# SET VARIABLES                                               
+# SET VARIABLES
 self=$(basename "$0")                                                 #uses the same name as the file
 update_self=${update_self:-1}
 local_rev=$(grep -oE 'Revision\s[0-9]{1,3}' "$0" | awk '{ print $2 }')
@@ -256,7 +256,6 @@ then    logger -s -t uygroa-updater "Error on chmod $OCTAL_MODE %0.tmp from $upd
 fi
 cat > /tmp/updatescript.sh << EOF
 #!/bin/sh
-source $cfg
 if mv "$0.tmp" "$0";
 then    logger -s -t uygroa-updater "Update complete."
         if [ "$run_postupgrade" = "enabled" ]; then
