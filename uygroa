@@ -17,7 +17,6 @@ if [ -f $cfg ]
 source $cfg
                                                # edit this if you want your cfg in a different directory
 self=$(basename "$0")                                                 #uses the same name as the file
-update_base=https://raw.githubusercontent.com/Knapoc/uygroa/master    #dont link directly to file link to the folder
 update_self=${update_self:-1}
 local_rev=$(grep -oE 'Revision\s[0-9]{1,3}' "$0" | awk '{ print $2 }')
 online_rev=$(wget --no-check-certificate -q -O - "$update_base/$self" | grep -oE 'Revision\s[0-9]{1,3}' | awk '{print $2}')
