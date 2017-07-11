@@ -1,6 +1,6 @@
 #!/bin/sh
 # uygroa
-Revision=8
+Revision=9
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
@@ -23,9 +23,9 @@ then    logger -s -t uygroa-updater "Failed downloading new version!"
 fi
 OCTAL_MODE=$(stat -c '%a' "$0")
     case ${OCTAL_MODE:--1} in
-        -[1] )          echo "Failed: Error : OCTAL_MODE was empty"; exit 1 ;;
-        777|775|755 )   echo "OCTAL mode set:${OCTAL_MODE}" ;;
-        * )             echo "Failed: Error in OCTAL_MODEs, found value=${OCTAL_MODE}" exit 1 ;;
+        -[1] )          logger -s -t uygroa "Failed: Error : OCTAL_MODE was empty"; exit 1 ;;
+        777|775|755 )   logger -s -t uygroa "OCTAL mode set:${OCTAL_MODE}" ;;
+        * )             logger -s -t uygroa "Failed: Error in OCTAL_MODEs, found value=${OCTAL_MODE}" exit 1 ;;
     esac
 if      ! chmod "$OCTAL_MODE" "$0".tmp ;
 then    logger -s -t uygroa-updater "Error on chmod $OCTAL_MODE %0.tmp from $UPDATE_BASE/$SELF, can't continue"
