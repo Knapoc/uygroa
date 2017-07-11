@@ -27,12 +27,16 @@ Additions to the original ublockr
 * Clear cache function
 * Update host file sources (listupdate)
 * Option to disable whitelists
+* Update only, when newer revision is available
 
 Options
 --------------
 * **-update**
 
-   Updates uygroa with the latest github version
+   Updates uygroa if a newer revision is available on github
+* **-fupdate**
+
+   Updates uygroa with the latest github version (force update)
 * **-version**
 
    shows version number
