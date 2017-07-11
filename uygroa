@@ -1,6 +1,6 @@
 #!/bin/sh
 # uygroa
-# Revision 10
+# Revision 11
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
@@ -14,7 +14,7 @@ local_rev=$(grep -oE 'Revision\s[0-9]{1,3}' "$0" | awk '{ print $2 }')
 online_rev=$(wget --no-check-certificate -q -O - "$update_base/$self" | grep -oE 'Revision\s[0-9]{1,3}' | awk '{print $2}')
 # END VARIABLES
 
-######### uygroa self-updater
+######### self-updater
 
 run_self_updater () {
         logger -s -t uygroa-updater "Performing self-update to Version $online_rev."
@@ -113,9 +113,7 @@ get_list_source_wl () {
 wget -q "$wlfilter" -O "$path"/whitelist.filter
 }
 
-
-
-get_lists () {
+function_get_lists () {
 mkdir -p "$path"
 if [ -f "$path"/ip.list ]; then echo; else get_list_source_ip; fi
 if [ -f "$path"/no.list ]; then echo; else get_list_source_no; fi
@@ -290,7 +288,7 @@ case ${option} in
                 -clearcache)  function_clear_cache ;;
                 *)            #enable/disable here
                               info_check_online
-                              get_lists
+                              function_get_lists
                               function_sort_lists
                               function_make_hostfile
                               function_cleanup
