@@ -16,7 +16,6 @@ echo "your current version is $Revision"
 
 self_updater () {
         logger -s -t uygroa "Performing self-update to Version $ONLINE_REV... Please wait..."
-        echo "Performing self-update to Version $ONLINE_REV... Please wait..."
 if      ! wget --quiet --output-document="$0.tmp" $UPDATE_BASE/$SELF ;
 then    echo "Failed downloading new version!"
         echo "File requested: $UPDATE_BASE/$SELF"
