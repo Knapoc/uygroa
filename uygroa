@@ -1,6 +1,6 @@
 #!/bin/sh
 # uygroa
-Revision=6
+Revision=7
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
@@ -15,10 +15,10 @@ echo "your current version is $Revision"
 }
 
 self_updater () {
-        logger -s -t uygroa "Performing self-update to Version $ONLINE_REV... Please wait..."
+        logger -s -t uygroa-updater "Performing self-update to Version $ONLINE_REV."
 if      ! wget --quiet --output-document="$0.tmp" $UPDATE_BASE/$SELF ;
-then    echo "Failed downloading new version!"
-        echo "File requested: $UPDATE_BASE/$SELF"
+then    logger -s -t uygroa-updater "Failed downloading new version!"
+        logger -s -t uygroa-updater "File requested: $UPDATE_BASE/$SELF"
         exit 1
 fi
 OCTAL_MODE=$(stat -c '%a' $0)
@@ -28,16 +28,16 @@ OCTAL_MODE=$(stat -c '%a' $0)
         * )             echo "Failed: Error in OCTAL_MODEs, found value=${OCTAL_MODE}" exit 1 ;;
     esac
 if      ! chmod $OCTAL_MODE $0.tmp ;
-then    echo "Error on chmod $OCTAL_MODE %0.tmp from $UPDATE_BASE/$SELF, can't continue"
+then    logger -s -t uygroa-updater "Error on chmod $OCTAL_MODE %0.tmp from $UPDATE_BASE/$SELF, can't continue"
         exit 1
 fi
 cat > /tmp/updatescript.sh << EOF
 #!/bin/sh
 if mv "$0.tmp" "$0";
-then    logger -s -t uygroa "Update complete.."
+then    logger -s -t uygroa-updater "Update complete."
         exec env UPDATE_SELF=0 /bin/sh "$0"
         rm \$0
-else    logger -s -t uygroa "Update failed.."
+else    logger -s -t uygroa-updater "Update failed."
 fi
 EOF
         echo "Inserting update process..."
@@ -48,11 +48,11 @@ check_update () {
 if [ ${UPDATE_SELF} -ne 0 ] && [ "$ONLINE_REV" -gt "$Revision" ]
 then self_updater
   else
-    logger -s -t uygroa "No update needed. You're running Version $Revision. The latest online Version is $ONLINE_REV."
+    logger -s -t uygroa "No update needed. You're running version $Revision. The latest online version is $ONLINE_REV."
 fi }
 
-if [ -f $cfg ]; then logger -s -t uygroa "Reading uygroa config...." >&2
-else logger -s -t uygroa no configuration found exiting... ; exit 0 ;fi
+if [ -f $cfg ]; then logger -s -t uygroa "Reading uygroa config." >&2
+else logger -s -t uygroa "No configuration found. Exiting." ; exit 0 ;fi
 source $cfg
 
 # SET APPCHECK
