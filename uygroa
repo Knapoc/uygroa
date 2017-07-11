@@ -1,24 +1,37 @@
 #!/bin/sh
 # uygroa
-Revision=9
+# Revision 10
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
+
 cfg=/opt/etc/uygroa.cfg                                               # edit this if you want your cfg in a different directory
-SELF=$(basename "$0")                                                 #uses the same name as the file
-UPDATE_BASE=https://raw.githubusercontent.com/Knapoc/uygroa/master    #dont link directly to file link to the folder
-UPDATE_SELF=${UPDATE_SELF:-1}
-ONLINE_REV=$(wget --no-check-certificate -q -O - "$UPDATE_BASE/$SELF" | grep -oE 'Revision\=[0-9]{1,3}' | awk '{print substr($1,10)}')
 
-show_version () {
-echo "your current version is $Revision"
-}
+if [ -f $cfg ]
+    then logger -s -t uygroa "Reading uygroa config." >&2
+    else logger -s -t uygroa "No configuration found. Exiting."
+    exit 0
+  fi
 
-self_updater () {
-        logger -s -t uygroa-updater "Performing self-update to Version $ONLINE_REV."
-if      ! wget --quiet --output-document="$0.tmp" "$UPDATE_BASE/$SELF" ;
+source $cfg
+
+# SET VARIABLES
+self=$(basename "$0")                                                 #uses the same name as the file
+update_base=https://raw.githubusercontent.com/Knapoc/uygroa/master    #dont link directly to file link to the folder
+update_self=${update_self:-1}
+local_rev=$(grep -oE "Revision\s[0-9]{1,3}" "$0" | awk '{ print $2 }')
+online_rev=$(wget --no-check-certificate -q -O - "$update_base/$self" | grep -oE 'Revision\s[0-9]{1,3}' | awk '{print $2}')
+pix_v4=$(ifconfig "$iface" | awk '/inet addr/{print substr($2,6)}')
+pix_v6=$(ip addr show dev "$iface" | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d')
+regexp_ip='\b([0-9]{1,3}\.){3}[0-9]{1,3}\s+(([a-zA-Z0-9]+)(\-|\|_|\.)){1,8}[a-zA-Z]{2,4}((\.)[a-zA-Z]{2,4}){0,1}\b'
+regexp_no='\b(([a-zA-Z0-9]+)(\-|\|_|\.)){1,8}[a-zA-Z]{2,4}((\.)[a-zA-Z]{2,4}){0,1}\b'
+# END VARIABLES
+
+run_self_updater () {
+        logger -s -t uygroa-updater "Performing self-update to Version $online_rev."
+if      ! wget --quiet --output-document="$0.tmp" "$update_base/$self" ;
 then    logger -s -t uygroa-updater "Failed downloading new version!"
-        logger -s -t uygroa-updater "File requested: $UPDATE_BASE/$SELF"
+        logger -s -t uygroa-updater "File requested: $update_base/$self"
         exit 1
 fi
 OCTAL_MODE=$(stat -c '%a' "$0")
@@ -28,14 +41,14 @@ OCTAL_MODE=$(stat -c '%a' "$0")
         * )             logger -s -t uygroa "Failed: Error in OCTAL_MODEs, found value=${OCTAL_MODE}" exit 1 ;;
     esac
 if      ! chmod "$OCTAL_MODE" "$0".tmp ;
-then    logger -s -t uygroa-updater "Error on chmod $OCTAL_MODE %0.tmp from $UPDATE_BASE/$SELF, can't continue"
+then    logger -s -t uygroa-updater "Error on chmod $OCTAL_MODE %0.tmp from $update_base/$self, can't continue"
         exit 1
 fi
 cat > /tmp/updatescript.sh << EOF
 #!/bin/sh
 if mv "$0.tmp" "$0";
 then    logger -s -t uygroa-updater "Update complete."
-        exec env UPDATE_SELF=0 /bin/sh "$0"
+        exec env update_self=0 /bin/sh "$0"
         rm \$0
 else    logger -s -t uygroa-updater "Update failed."
 fi
@@ -44,16 +57,12 @@ EOF
             exec /bin/sh /tmp/updatescript.sh; rm /tmp/updatescript.sh
 }
 
-check_update () {
-if [ "${UPDATE_SELF}" -ne 0 ] && [ "${ONLINE_REV}" -gt "${Revision}" ]
-then self_updater
+function_check_update () {
+if [ "${update_self}" -ne 0 ] && [ "${online_rev}" -gt "${Revision}" ]
+then run_self_updater
   else
-    logger -s -t uygroa "No update needed. You're running version $Revision. The latest online version is $ONLINE_REV."
+    logger -s -t uygroa "No update needed. You're running version $local_rev. The latest online version is $online_rev."
 fi }
-
-if [ -f $cfg ]; then logger -s -t uygroa "Reading uygroa config." >&2
-else logger -s -t uygroa "No configuration found. Exiting." ; exit 0 ;fi
-source $cfg
 
 # SET APPCHECK
 if [ -z "$(which opkg)" ]; then logger -s -t uygroa "no package manager found"; exit 0; else
@@ -75,14 +84,7 @@ case $(grep -oE 'merlin|padavan|OpenWrt' /proc/version) in
   *)         path=$other_path >&2; configuration=$other_dnsmasq >&2; iface=$nic ;;
 esac
 
-# SET VARIABLES
-pix_v4=$(ifconfig "$iface" | awk '/inet addr/{print substr($2,6)}')
-pix_v6=$(ip addr show dev "$iface" | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d')
-regexp_ip='\b([0-9]{1,3}\.){3}[0-9]{1,3}\s+(([a-zA-Z0-9]+)(\-|\|_|\.)){1,8}[a-zA-Z]{2,4}((\.)[a-zA-Z]{2,4}){0,1}\b'
-regexp_no='\b(([a-zA-Z0-9]+)(\-|\|_|\.)){1,8}[a-zA-Z]{2,4}((\.)[a-zA-Z]{2,4}){0,1}\b'
-# END VARIABLES
-
-check_online () {
+info_check_online () {
 while ! ping -q -c 1 google.com >/dev/null 2>&1; do
   sleep 1
   WaitSeconds=$((WaitSeconds+1))
@@ -90,7 +92,7 @@ while ! ping -q -c 1 google.com >/dev/null 2>&1; do
 done
 }
 
-check_ipv6 () {
+info_check_ipv6 () {
   ping6 -q -c 1 google.com >/dev/null 2>&1 && $1 || echo
 }
 
@@ -106,22 +108,7 @@ get_list_source_wl () {
 wget -q "$wlfilter" -O "$path"/whitelist.filter
 }
 
-list_source_update () {
-bl_source_update
-wl_source_update
-}
 
-bl_source_update () {
-rm "$path"/ip.list
-rm "$path"/no.list
-get_list_source_ip
-get_list_source_no
-}
-
-wl_source_update () {
-rm "$path"/whitelist.filter
-get_list_source_wl
-}
 
 get_lists () {
 mkdir -p "$path"
@@ -132,29 +119,29 @@ logger -s -t uygroa updating adblock lists.
      wget -t 5 -q --show-progress -i "$path"/no.list -O "$path"/no.part
 }
 
-sort_lists () {
-sort_list_ip4
-check_ipv6 sort_list_ip6
+function_sort_lists () {
+run_sort_list_ip4
+info_check_ipv6 run_sort_list_ip6
 }
 
-sort_list_ip4 () {
+run_sort_list_ip4 () {
 grep -oE "$regexp_ip" "$path"/ip.part | awk '{print "127.0.0.1    " $2}' | sed "s/127\\.0\\.0\\.1/$pix_v4/" | sort -u >"$path"/ipv4.part
 grep -oE "$regexp_no" "$path"/no.part | awk '{print "127.0.0.1    " $1}'| sed "s/127\\.0\\.0\\.1/$pix_v4/" | sort -u >>"$path"/ipv4.part
 }
 
-sort_list_ip6 () {
+run_sort_list_ip6 () {
 grep -oE "$regexp_ip" "$path"/ip.part | awk '{print "127.0.0.1    " $2}' | sed "s/127\\.0\\.0\\.1/$pix_v6/" | sort -u >"$path"/ipv6.part
 grep -oE "$regexp_no" "$path"/no.part | awk '{print "127.0.0.1    " $1}'| sed "s/127\\.0\\.0\\.1/$pix_v6/" | sort -u >>"$path"/ipv6.part
 }
 
-make_hostfile () {
-make_ipv4_hostfile
-check_ipv6 make_ipv6_hostfile
+function_make_hostfile () {
+run_make_ipv4_hostfile
+info_check_ipv6 run_make_ipv6_hostfile
 }
 
-make_ipv4_hostfile () {
-  check_malware_blocking_ipv4
-  check_privacy_blocking_ipv4
+run_make_ipv4_hostfile () {
+  run_check_malware_blocking_ipv4
+  run_check_privacy_blocking_ipv4
   run_whitelisting_ipv4
   if [ -s "$path"/whitelist_v4.part ];
     then grep -Fvxf "$path"/whitelist_v4.part "$path"/ipv4.part | tr '[:upper:]' '[:lower:]' | sort -u > "$path"/ipv4_hosts;
@@ -162,9 +149,9 @@ make_ipv4_hostfile () {
   fi
 }
 
-make_ipv6_hostfile () {
-  check_malware_blocking_ipv6
-  check_privacy_blocking_ipv6
+run_make_ipv6_hostfile () {
+  run_check_malware_blocking_ipv6
+  run_check_privacy_blocking_ipv6
   run_whitelisting_ipv6
   if [ -s "$path"/whitelist_v6.part ];
     then grep -Fvxf "$path"/whitelist_v6.part "$path"/ipv6.part | tr '[:upper:]' '[:lower:]' | sort -u > "$path"/ipv6_hosts;
@@ -172,14 +159,14 @@ make_ipv6_hostfile () {
   fi
 }
 
-check_malware_blocking_ipv4 () {
+run_check_malware_blocking_ipv4 () {
   if [ -s /jffs/malware-filter.blacklist ] && [ -s /jffs/scripts/malware-filter ];then
     logger -s -t uygroa "Removing malware-filter entries in blocking file, list is in use"
     grep -Fvxf /jffs/malware-filter.whitelist /jffs/malware-filter.blacklist | grep "^[^#;]" | sed 's/http[s]*:\/\///;s|\/.*||' | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v4    $line"; done > "$path"/whitelist_v4.part
   fi
 }
 
-check_privacy_blocking_ipv4 () {
+run_check_privacy_blocking_ipv4 () {
   if [ -s /jffs/privacy-filter.blacklist ] && [ -s /jffs/scripts/privacy-filter ];then
     logger -s -t uygroa "Removing privacy-filter entries in blocking file, list is in use"
     grep -Fvxf /jffs/privacy-filter.whitelist /jffs/privacy-filter.blacklist | grep "^[^#;]" | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v4    $line"; done >> "$path"/whitelist_v4.part
@@ -195,14 +182,14 @@ if [ "$WHITELISTING" = "enabled" ]; then
   fi
 }
 
-check_malware_blocking_ipv6 () {
+run_check_malware_blocking_ipv6 () {
   if [ -s /jffs/malware-filter.blacklist ] && [ -s /jffs/scripts/malware-filter ];then
     logger -s -t uygroa "Removing malware-filter entries in blocking file, list is in use"
     grep -Fvxf /jffs/malware-filter.whitelist /jffs/malware-filter.blacklist | grep "^[^#;]" | sed 's/http[s]*:\/\///;s|\/.*||' | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v6    $line"; done > "$path"/whitelist_v6.part
   fi
 }
 
-check_privacy_blocking_ipv6 () {
+run_check_privacy_blocking_ipv6 () {
   if [ -s /jffs/privacy-filter.blacklist ] && [ -s /jffs/scripts/privacy-filter ];then
     logger -s -t uygroa "Removing privacy-filter entries in blocking file, list is in use"
     grep -Fvxf /jffs/privacy-filter.whitelist /jffs/privacy-filter.blacklist | grep "^[^#;]" | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v6    $line"; done >> "$path"/whitelist_v6.part
@@ -218,13 +205,13 @@ if [ "$WHITELISTING" = "enabled" ]; then
   fi
 }
 
-cleanup () {
+function_cleanup () {
 rm "$path"/*.part
 chmod 666 "$path"/ipv4_hosts
 if [ -f "$path"/ipv6_hosts ]; then chmod 666 "$path"/ipv6_hosts; fi
 }
 
-add_config () {
+function_add_config () {
 
 if [ ! -f "$configuration" ]; then touch "$configuration"; fi
 
@@ -243,7 +230,7 @@ if [ -f "$path"/ipv6_hosts ]; then
 esac
 }
 
-dnsmasq_restart () {
+function_dnsmasq_restart () {
 case $(grep -oE 'merlin|padavan|OpenWrt' /proc/version) in
   merlin)    service restart_dnsmasq   ;;
   padavan)   kill -SIGTERM "$(pidof dnsmasq)" && /usr/sbin/dnsmasq   ;;
@@ -252,37 +239,57 @@ case $(grep -oE 'merlin|padavan|OpenWrt' /proc/version) in
 esac; logger -s -t uygroa reloaded dnsmasq to read in new hosts
 }
 
-summary () {
+function_summary () {
 ipv4_total=$(< "$path"/ipv4_hosts wc -l)
 if [ -f "$path"/ipv6_hosts ]; then ipv6_total=$(< "$path"/ipv6_hosts wc -l);fi
 logger -s -t uygroa updated ipv4 adblock lists, "$ipv4_total" ads sites blocked
 if [ -f "$path"/ipv6_hosts ]; then logger -s -t uygroa updated ipv6 adblock lists, "$ipv6_total" ads sites blocked; fi
 }
 
-clear_cache () {
+info_show_version () {
+echo "your current version is $local_rev"
+}
+
+function_list_source_update () {
+function_bl_source_update
+function_wl_source_update
+}
+
+function_bl_source_update () {
+rm "$path"/ip.list
+rm "$path"/no.list
+get_list_source_ip
+get_list_source_no
+}
+
+function_wl_source_update () {
+rm "$path"/whitelist.filter
+get_list_source_wl
+}
+
+function_clear_cache () {
 rm "$path"/*
 if grep -Fxq "addn-hosts=$path/ipv4_hosts" "$configuration"; then sed --in-place '/ipv4_hosts/d' "$configuration"; fi
 if grep -Fxq "addn-hosts=$path/ipv6_hosts" "$configuration"; then sed --in-place '/ipv6_hosts/d' "$configuration"; fi
-dnsmasq_restart
+function_dnsmasq_restart
 }
+
 
 option="${1}"
 case ${option} in
-                -update) check_update ;;
-                -version) show_version ;;
-                -fetchall) list_source_update ;;
-                -fetchbl) bl_source_update ;;
-                -fetchwl) wl_source_update ;;
-                -clearcache) clear_cache ;;
-                *)
-                #enable/disable here
-                check_online
-                get_lists
-                sort_lists
-                make_hostfile
-                cleanup
-                add_config
-                dnsmasq_restart
-                summary
-                ;;
+                -version)     info_show_version ;;
+                -update)      function_check_update ;;
+                -fetchall)    function_list_source_update ;;
+                -fetchbl)     function_bl_source_update ;;
+                -fetchwl)     function_wl_source_update ;;
+                -clearcache)  function_clear_cache ;;
+                *)            #enable/disable here
+                              info_check_online
+                              get_lists
+                              function_sort_lists
+                              function_make_hostfile
+                              function_cleanup
+                              function_add_config
+                              function_dnsmasq_restart
+                              function_summary ;;
                 esac
