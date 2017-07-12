@@ -1,6 +1,6 @@
 #!/bin/sh
 # uygroa
-# Revision 13
+# Revision 14
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
