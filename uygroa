@@ -14,7 +14,7 @@ if [ -f $cfg ]
     exit 0
   fi
 
-source $cfg
+. $cfg
 
 # SET VARIABLES
 self=$(basename "$0")                                                 #uses the same name as the file
@@ -105,8 +105,8 @@ run_make_ipv4_hostfile () {
   run_check_privacy_blocking_ipv4
   run_whitelisting_ipv4
   if [ -s "$path"/whitelist_v4.part ];
-    then grep -Fvxf "$path"/whitelist_v4.part "$path"/ipv4.part | tr '[A-Z]' '[a-z]' | sort -u > "$path"/ipv4_hosts;
-  else < "$path"/ipv4.part tr '[A-Z]' '[a-z]' | sort -u > "$path"/ipv4_hosts;
+    then grep -Fvxf "$path"/whitelist_v4.part "$path"/ipv4.part | awk '{print tolower($0)}' | sort -u > "$path"/ipv4_hosts;
+  else < "$path"/ipv4.part awk '{print tolower($0)}' | sort -u > "$path"/ipv4_hosts;
   fi
 }
 
@@ -115,8 +115,8 @@ run_make_ipv6_hostfile () {
   run_check_privacy_blocking_ipv6
   run_whitelisting_ipv6
   if [ -s "$path"/whitelist_v6.part ];
-    then grep -Fvxf "$path"/whitelist_v6.part "$path"/ipv6.part | tr '[A-Z]' '[a-z]' | sort -u > "$path"/ipv6_hosts;
-  else < "$path"/ipv6.part tr '[A-Z]' '[a-z]' | sort -u > "$path"/ipv6_hosts;
+    then grep -Fvxf "$path"/whitelist_v6.part "$path"/ipv6.part | awk '{print tolower($0)}' | sort -u > "$path"/ipv6_hosts;
+  else < "$path"/ipv6.part awk '{print tolower($0)}' | sort -u > "$path"/ipv6_hosts;
   fi
 }
 
