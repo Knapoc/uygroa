@@ -1,6 +1,6 @@
 #!/bin/sh
 # uygroa
-# Revision 16
+# Revision 17
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
@@ -133,14 +133,14 @@ run_check_malware_blocking_ipv4 () {
 
 run_check_malware_blocking_ipv4_2 () {
   if [ -s /jffs/ipset_lists/ya-malware-block.urls ] && [ -s /jffs/scripts/ya-malware-block.sh ];then
-    logger -s -t uygroa "Removing malware-filter entries in blocking file, list is in use"
+    logger -s -t uygroa "Removing ya-malware-block entries in blocking file, list is in use"
     grep -Fvxf /jffs/ipset_lists/ya-malware-block.whites /jffs/ipset_lists/ya-malware-block.urls | grep "^[^#;]" | sed 's/http[s]*:\/\///;s|\/.*||' | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v4    $line"; done > "$path"/whitelist_v4.part
   fi
 }
 
 run_check_iblocklist_blocking_ipv4 () {
   if [ -s /jffs/ipset_lists/blacklist-domains.txt ] && [ -s /jffs/scripts/iblocklist-loader.sh ];then
-    logger -s -t uygroa "Removing malware-filter entries in blocking file, list is in use"
+    logger -s -t uygroa "Removing iblocklist entries in blocking file, list is in use"
     grep -Fvxf /jffs/ipset_lists/whitelist-domains.txt /jffs/ipset_lists/blacklist-domains.txt | grep "^[^#;]" | sed 's/http[s]*:\/\///;s|\/.*||' | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v4    $line"; done > "$path"/whitelist_v4.part
   fi
 }
@@ -170,14 +170,14 @@ run_check_malware_blocking_ipv6 () {
 
 run_check_malware_blocking_ipv6_2 () {
   if [ -s /jffs/ipset_lists/ya-malware-block.urls ] && [ -s /jffs/scripts/ya-malware-block.sh ];then
-    logger -s -t uygroa "Removing malware-filter entries in blocking file, list is in use"
+    logger -s -t uygroa "Removing ya-malware-block entries in blocking file, list is in use"
     grep -Fvxf /jffs/ipset_lists/ya-malware-block.whites /jffs/ipset_lists/ya-malware-block.urls | grep "^[^#;]" | sed 's/http[s]*:\/\///;s|\/.*||' | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v6    $line"; done > "$path"/whitelist_v6.part
   fi
 }
 
 run_check_iblocklist_blocking_ipv6 () {
   if [ -s /jffs/ipset_lists/blacklist-domains.txt ] && [ -s /jffs/scripts/iblocklist-loader.sh ];then
-    logger -s -t uygroa "Removing malware-filter entries in blocking file, list is in use"
+    logger -s -t uygroa "Removing iblocklist entries in blocking file, list is in use"
     grep -Fvxf /jffs/ipset_lists/whitelist-domains.txt /jffs/ipset_lists/blacklist-domains.txt | grep "^[^#;]" | sed 's/http[s]*:\/\///;s|\/.*||' | sed -e 's/^//; s/$//' | while read -r line; do echo "$pix_v6    $line"; done > "$path"/whitelist_v6.part
   fi
 }
