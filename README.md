@@ -1,4 +1,4 @@
-uygroa
+uygroa - unleash yourself, get rid of ads
 =============
 Welcome to uygroa, a DNS based ad blocker forked from ublockr. uygroa redirects ad domains to pixelserv-tls webserver.
 
