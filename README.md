@@ -72,7 +72,7 @@ Custom filtering
 
 Additional resources
 --------------
-* [**Pixelserv-TLS**](https://github.com/kvic-z/pixelserv-tls)
+* [**Pixelserv-TLS**](https://github.com/kvic-z/pixelserv-tls" target="_blank)
 * **Entware on AsusWRT (stock)**: https://github.com/Entware-ng/Entware-ng/wiki/Install-on-Asus-stock-firmware
 * **Entware on AsusWRT-Merlin**: https://github.com/RMerl/asuswrt-merlin/wiki/Entware
 * **Entware on Padavan**: https://bitbucket.org/padavan/rt-n56u/wiki/EN/HowToConfigureEntware
