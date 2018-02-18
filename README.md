@@ -22,8 +22,8 @@ Installation
 
 Additions to the original ublockr
 --------------
-* Compatibility with malware-filter (https://gitlab.com/swe_toast/malware-filter) by Toast
-* Compatibility with privacy-filter (https://gitlab.com/swe_toast/privacy-filter) by Toast
+* Compatibility with [malware-filter](https://gitlab.com/swe_toast/malware-filter) by Toast
+* Compatibility with [privacy-filter](https://gitlab.com/swe_toast/privacy-filter) by Toast
 * Clear cache function
 * Update host file sources (listupdate)
 * Option to disable whitelists
@@ -65,7 +65,7 @@ Custom filtering
    `nano /opt/var/cache/uygroa/whitelist.filter` **Note**: -fetchall & - fetchwl delete your customized whitelist.
 * **Sources**:
 
-   `nano /opt/var/cache/uygroa/ip.list` or `nano /opt/var/cache/uygroa/no.list` depending on the layout of the new hostfile: if listed with ip addess, then use ip.list. **Note**: -fetchall & - fetchbl delete your customized host file sources.
+   `nano /opt/var/cache/uygroa/ip.list` or `nano /opt/var/cache/uygroa/no.list` depending on the layout of the new hostfile: if listed with ip addess, then use ip.list. [ip.list](https://github.com/Knapoc/uygroa/blob/master/ip.list) has some host files disabled and I suggest you [read up](https://hosts-file.net/?s=Download) on what they block. Remove the hash to enable them.  **Note**: -fetchall & - fetchbl delete your customized host file sources.
 * **Personal Blacklist**:
 
    You can use your own blocklist. Make sure that it follows dnsmasq standards (e.g. `address=/domain.com/<pixelserv-ip>`) and link it in dnsmasq.conf.add (e.g. `conf-file=/mypersonalblocklist.conf`).
