@@ -49,6 +49,9 @@ Options
 * **-fetchwl**
 
    Deletes whitelist.filter and downloads it again from github.
+* **-addwl**
+
+   Add entries to your whitelist: `uygroa -addwl example.com`.
 * **-clearcache**
 
    Deletes the content of the cache folder: ip.list, no.list, whitelist.filter, ipv4_hosts, ipv6_hosts

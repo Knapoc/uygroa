@@ -1,6 +1,6 @@
 #!/bin/sh
 # uygroa
-# Revision 17
+# Revision 18
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
@@ -267,6 +267,10 @@ if grep -Fxq "addn-hosts=$path/ipv6_hosts" "$configuration"; then sed --in-place
 function_dnsmasq_restart
 }
 
+function_addto_whitelist () {
+  echo "$wl_entry" >> "$path"/whitelist.filter
+}
+
 ######### self-updater
 
 run_self_updater () {
@@ -330,6 +334,7 @@ find "$pixpath" -type f -not -name 'ca.*' -print0 | xargs -0 rm --
 }
 
 option="${1}"
+wl_entry="${2}"
 case ${option} in
                 -version)     info_show_version ;;
                 -update)      function_check_update ;;
@@ -340,6 +345,7 @@ case ${option} in
                 -clearcache)  function_clear_cache ;;
                 -certgen)     function_generate_rootcert ;;
                 -certpurge)   function_purge_pixelcerts ;;
+                -addwl)       function_addto_whitelist ;;
                 *)            #enable/disable here
                               info_check_online
                               function_get_lists
