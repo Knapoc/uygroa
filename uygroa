@@ -1,6 +1,6 @@
 #!/bin/sh
 # uygroa
-# Revision 18
+# Revision 19
 # uygroa is a fork of ublockr (version 4) by Toast and Jacob Salmela (Pi-Hole) formerly published under GPL 3.0 https://www.snbforums.com/threads/ublockr-a-minimalists-approach-to-adblocking.31683/
 # Licensed under GPL 3.0
 # Script made for router supporting Entware
@@ -333,6 +333,52 @@ function_purge_pixelcerts (){
 find "$pixpath" -type f -not -name 'ca.*' -print0 | xargs -0 rm --
 }
 
+function_count_ads(){
+	if grep -wq "log-facility" /etc/dnsmasq.conf; then
+		if [ -f "${LOG_DIR}/dnsmasq.log" ]; then
+			if [ -f "/tmp/div_lock_ac" ]; then
+				sleep 4
+				echo "$$" > "/tmp/div_lock_ac"
+				for process in $(ps -T | grep 'uygroa -adcount' | grep -v 'grep ' | awk '{print $1}'); do
+					[ "$process" != "$(sed -n '1p' /tmp/div_lock_ac)" ] && kill "$process" 2> /dev/null
+				done
+			else
+				echo "$$" > "/tmp/div_lock_ac"
+			fi
+      
+      if [ ! -z "$pix_v6" ]; then
+        this_blockingIP="is $pix_v4\|is $pix_v6"
+      else
+        this_blockingIP="is $pix_v4"
+      fi
+        
+			mark=uygroa-ads-counter
+
+			if grep -q "$mark" ${LOG_DIR}/dnsmasq.log; then
+				adsNew=$(sed -n "/$mark/,\$p" ${LOG_DIR}/dnsmasq.log | grep -c "$this_blockingIP")
+				sed -i "/$mark/d" "${LOG_DIR}/dnsmasq.log"
+				echo "$mark" >>"${LOG_DIR}/dnsmasq.log"
+			else
+				adsNew=$(cat ${LOG_DIR}/dnsmasq.log | grep -c "$this_blockingIP")
+				echo "$mark" >>"${LOG_DIR}/dnsmasq.log"
+			fi
+			kill -USR2 $(pidof dnsmasq)
+      
+			adsBlocked=$((adsNew+adsBlocked))
+			adsWeek=$((adsNew+adsWeek))
+			[ -z "$adsPrevCount" ] && adsPrevCount=$(date +"%b %d %R") || adsPrevCount=$adsLastCount
+			adsLastCount=$(date +"%b %d %R")
+			rm -f "/tmp/div_lock_ac"
+		else
+			lastError=" dnsmasq.log not found, cannot count ads"
+			logger -t uygroa "dnsmasq.log not found, cannot count ads, from $0"
+		fi
+	else
+		lastError=" logging is disabled, cannot count ads"
+		logger -t uygroa "logging is disabled, cannot count ads, from $0"
+	fi
+}
+
 option="${1}"
 wl_entry="${2}"
 case ${option} in
@@ -346,6 +392,7 @@ case ${option} in
                 -certgen)     function_generate_rootcert ;;
                 -certpurge)   function_purge_pixelcerts ;;
                 -addwl)       function_addto_whitelist ;;
+                -adcount)     function_count_ads ;;
                 *)            #enable/disable here
                               info_check_online
                               function_get_lists
